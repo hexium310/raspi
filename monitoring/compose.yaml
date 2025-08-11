@@ -1,0 +1,104 @@
+services:
+  prometheus:
+    image: prom/prometheus:v3.5.0
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --web.enable-admin-api
+    ports:
+      - "9090:9090"
+    configs:
+      - source: prometheus
+        target: /etc/prometheus/prometheus.yml
+    volumes:
+      - type: volume
+        source: prometheus
+        target: /prometheus
+    extra_hosts:
+      host.docker.internal: host-gateway
+
+  node_exporter:
+    image: prom/node-exporter:v1.9.1
+    network_mode: host
+    pid: host
+    ports:
+      - target: 9100
+        published: 9100
+        mode: host
+    volumes:
+      - type: bind
+        source: /
+        target: /rootfs
+        read_only: true
+      - type: bind
+        source: /proc
+        target: /host/proc
+        read_only: true
+      - type: bind
+        source: /sys
+        target: /host/sys
+        read_only: true
+      - type: bind
+        source: /run
+        target: /host/run
+        read_only: true
+    command:
+      - --path.rootfs
+      - /rootfs
+      - --path.procfs
+      - /host/proc
+      - --path.sysfs
+      - /host/sys
+      - --path.udev.data
+      - /host/run/udev/data
+      - --no-collector.selinux
+      - --collector.filesystem.mount-points-exclude
+      - ^(/rootfs)?/(dev|host|proc|sys|var/lib/docker/.+)($$|/)
+      - --collector.netdev.device-exclude
+      - ^(br|veth|docker)
+    deploy:
+      mode: global
+
+  cadvisor:
+    image: ghcr.io/google/cadvisor:v0.53.0
+    volumes:
+      - type: bind
+        source: /
+        target: /rootfs
+        read_only: true
+      - type: bind
+        source: /var/run
+        target: /var/run
+        read_only: true
+      - type: bind
+        source: /sys
+        target: /sys
+        read_only: true
+      - type: bind
+        source: /var/lib/docker/
+        target: /var/lib/docker
+        read_only: true
+      - type: bind
+        source: /dev/disk/
+        target: /dev/disk
+        read_only: true
+    deploy:
+      mode: global
+
+  grafana:
+    image: grafana/grafana:12.1.0
+    ports:
+      - "3001:3000"
+    volumes:
+      - type: volume
+        source: grafana
+        target: /var/lib/grafana
+
+configs:
+  prometheus:
+    file: ./prometheus/prometheus.yml
+
+volumes:
+  grafana: 
+    driver: local
+  prometheus:
+    driver: local
