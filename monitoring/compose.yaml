@@ -4,8 +4,6 @@ services:
     command:
       - --config.file=/etc/prometheus/prometheus.yml
       - --web.enable-admin-api
-    ports:
-      - "9090:9090"
     configs:
       - source: prometheus
         target: /etc/prometheus/prometheus.yml
@@ -13,17 +11,19 @@ services:
       - type: volume
         source: prometheus
         target: /prometheus
-    extra_hosts:
-      host.docker.internal: host-gateway
+    networks:
+      - default
+      - proxy
+    deploy:
+      labels:
+        traefik.enable: "true"
+        traefik.docker.network: proxy
+        traefik.http.routers.prometheus.entrypoints: web
+        traefik.http.routers.prometheus.rule: Host(`prometheus.raspi.internal`)
+        traefik.http.services.prometheus.loadbalancer.server.port: "9090"
 
   node_exporter:
     image: prom/node-exporter:v1.9.1
-    network_mode: host
-    pid: host
-    ports:
-      - target: 9100
-        published: 9100
-        mode: host
     volumes:
       - type: bind
         source: /
@@ -55,8 +55,17 @@ services:
       - ^(/rootfs)?/(dev|host|proc|sys|var/lib/docker/.+)($$|/)
       - --collector.netdev.device-exclude
       - ^(br|veth|docker)
+    networks:
+      - default
+      - proxy
     deploy:
       mode: global
+      labels:
+        traefik.enable: "true"
+        traefik.docker.network: proxy
+        traefik.http.routers.node_exporter.entrypoints: web
+        traefik.http.routers.node_exporter.rule: Host(`node-exporter.raspi.internal`)
+        traefik.http.services.node_exporter.loadbalancer.server.port: "9100"
 
   cadvisor:
     image: ghcr.io/google/cadvisor:v0.53.0
@@ -81,17 +90,23 @@ services:
         source: /dev/disk/
         target: /dev/disk
         read_only: true
-    deploy:
-      mode: global
 
   grafana:
     image: grafana/grafana:12.1.0
-    ports:
-      - "3001:3000"
     volumes:
       - type: volume
         source: grafana
         target: /var/lib/grafana
+    networks:
+      - default
+      - proxy
+    deploy:
+      labels:
+        traefik.enable: "true"
+        traefik.docker.network: proxy
+        traefik.http.routers.grafana.entrypoints: web
+        traefik.http.routers.grafana.rule: Host(`grafana.raspi.internal`)
+        traefik.http.services.grafana.loadbalancer.server.port: "3000"
 
 configs:
   prometheus:
@@ -102,3 +117,7 @@ volumes:
     driver: local
   prometheus:
     driver: local
+
+networks:
+  proxy:
+    external: true
