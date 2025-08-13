@@ -2,6 +2,17 @@
 # them (\\d for \d). If running under systemd, you need to double them again
 # (\\\\d to mean \d), and escape newlines too.
 ARGS="--no-collector.selinux \
+--no-collector.bonding \
+--no-collector.conntrack \
+--no-collector.dmi \
+--no-collector.fibrechannel \
+--no-collector.infiniband \
+--no-collector.mdadm \
+--no-collector.nfsd \
+--no-collector.pressure \
+--no-collector.rapl \
+--no-collector.tapestats \
+--no-collector.zfs \
 --collector.filesystem.mount-points-exclude \
 ^/(dev|proc|sys|var/lib/docker/.+)($$|/) \
 --collector.netdev.device-exclude \
