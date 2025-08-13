@@ -1,0 +1,13 @@
+http:
+  routers:
+    node_exporter:
+      entryPoints: 
+        - web
+      service: node_exporter
+      rule: Host(`node_exporter.raspi.internal`)
+
+  services:
+    node_exporter:
+      loadBalancer:
+        servers: 
+          - url: http://host.docker.internal:9100

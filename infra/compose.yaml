@@ -1,6 +1,9 @@
 services:
   traefik:
     image: traefik:3.5
+    configs:
+      - source: traefik_file_provider
+        target: /etc/traefik/file_provider.yml
     volumes:
       - type: bind
         source: /var/run/docker.sock
@@ -11,9 +14,12 @@ services:
       - --providers.swarm
       - --providers.swarm.network=traefik
       - --providers.swarm.exposedByDefault=false
+      - --providers.file.directory=/etc/traefik
       - --entrypoints.web.address=:80
     ports:
       - "80:80"
+    extra_hosts:
+      host.docker.internal: host-gateway
     networks:
       - proxy
     deploy:
@@ -24,6 +30,10 @@ services:
         traefik.http.routers.api.service: api@internal 
         traefik.http.routers.api.rule: Host(`dashboard.raspi.internal`)
         traefik.http.services.grafana.loadbalancer.server.port: "80"
+
+configs:
+  traefik_file_provider:
+    file: ./traefik/file_provider.yml
 
 networks:
   proxy:

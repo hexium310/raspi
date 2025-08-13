@@ -11,6 +11,8 @@ services:
       - type: volume
         source: prometheus
         target: /prometheus
+    extra_hosts:
+      host.docker.internal: host-gateway
     networks:
       - default
       - proxy
@@ -21,51 +23,6 @@ services:
         traefik.http.routers.prometheus.entrypoints: web
         traefik.http.routers.prometheus.rule: Host(`prometheus.raspi.internal`)
         traefik.http.services.prometheus.loadbalancer.server.port: "9090"
-
-  node_exporter:
-    image: prom/node-exporter:v1.9.1
-    volumes:
-      - type: bind
-        source: /
-        target: /rootfs
-        read_only: true
-      - type: bind
-        source: /proc
-        target: /host/proc
-        read_only: true
-      - type: bind
-        source: /sys
-        target: /host/sys
-        read_only: true
-      - type: bind
-        source: /run
-        target: /host/run
-        read_only: true
-    command:
-      - --path.rootfs
-      - /rootfs
-      - --path.procfs
-      - /host/proc
-      - --path.sysfs
-      - /host/sys
-      - --path.udev.data
-      - /host/run/udev/data
-      - --no-collector.selinux
-      - --collector.filesystem.mount-points-exclude
-      - ^(/rootfs)?/(dev|host|proc|sys|var/lib/docker/.+)($$|/)
-      - --collector.netdev.device-exclude
-      - ^(br|veth|docker)
-    networks:
-      - default
-      - proxy
-    deploy:
-      mode: global
-      labels:
-        traefik.enable: "true"
-        traefik.docker.network: proxy
-        traefik.http.routers.node_exporter.entrypoints: web
-        traefik.http.routers.node_exporter.rule: Host(`node-exporter.raspi.internal`)
-        traefik.http.services.node_exporter.loadbalancer.server.port: "9100"
 
   cadvisor:
     image: ghcr.io/google/cadvisor:v0.53.0
