@@ -1,0 +1,133 @@
+x-hoarder-api-environment: &hoarder-api-environment
+  PGHOST: database
+  PGDATABASE: hoarder
+  PGUSER: hoarder
+  PGPASSFILE: /run/secrets/.pgpass
+  PGSSLMODE: disable
+
+services:
+  api:
+    image: ghcr.io/chitoku-k/hoarder/api
+    environment:
+      <<: *hoarder-api-environment
+      PORT: 8080
+      LOCALE: ja-JP
+      MEDIA_ROOT_DIR: /media
+      MEDIA_ROOT_URL: http://static.hoarder.raspi.internal
+    secrets:
+      - source: pgpass
+        target: .pgpass
+        mode: 0o600
+    volumes:
+      - type: bind
+        source: /media/hoarder_storage/media
+        target: /media
+    networks:
+      - default
+      - proxy
+    deploy:
+      labels:
+        traefik.enable: "true"
+        traefik.docker.network: proxy
+        traefik.http.routers.hoarder_api.entrypoints: web
+        traefik.http.routers.hoarder_api.rule: Host(`api.hoarder.raspi.internal`)
+        traefik.http.services.hoarder_api.loadbalancer.server.port: "8080"
+
+  init_db:
+    image: ghcr.io/chitoku-k/hoarder/api
+    command:
+      - migration
+      - apply
+    environment:
+      <<: *hoarder-api-environment
+    secrets:
+      - source: pgpass
+        target: .pgpass
+        mode: 0o600
+    deploy:
+      mode: replicated-job
+      restart_policy:
+        condition: on-failure
+
+  ui:
+    image: ghcr.io/chitoku-k/hoarder/ui
+    environment:
+      PORT: 3000
+      API_URL: http://api:8080
+      BASE_URL: http://localhost:3000
+    networks:
+      - default
+      - proxy
+    deploy:
+      labels:
+        traefik.enable: "true"
+        traefik.docker.network: proxy
+        traefik.http.routers.hoarder_ui.entrypoints: web
+        traefik.http.routers.hoarder_ui.rule: Host(`hoarder.raspi.internal`)
+        traefik.http.services.hoarder_ui.loadbalancer.server.port: "3000"
+
+  static:
+    image: nginx:1.27
+    environment:
+      MEDIA_ROOT_DIR: /media
+    configs:
+      - source: nginx_default_conf
+        target: /etc/nginx/templates/default.conf.template
+      - source: nginx_locations_root_conf
+        target: /etc/nginx/templates/locations/root.conf.template
+    volumes:
+      - type: bind
+        source: /media/hoarder_storage/media
+        target: /media
+        read_only: true
+    networks:
+      - default
+      - proxy
+    deploy:
+      labels:
+        traefik.enable: "true"
+        traefik.docker.network: proxy
+        traefik.http.routers.hoarder_static.entrypoints: web
+        traefik.http.routers.hoarder_static.rule: Host(`static.hoarder.raspi.internal`)
+        traefik.http.services.hoarder_static.loadbalancer.server.port: "80"
+
+  database:
+    image: postgres:17
+    environment:
+      PGUSER: hoarder
+      POSTGRES_DB: hoarder
+      POSTGRES_USER: hoarder
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres-passwd
+    volumes:
+      - type: volume
+        source: database
+        target: /var/lib/postgresql/data
+    secrets:
+      - source: postgres_passwd
+        target: postgres-passwd
+    networks:
+      - default
+      - hoarder_db
+
+configs:
+  nginx_default_conf:
+    file: ./static/default.conf.template
+  nginx_locations_root_conf:
+    file: ./static/locations/root.conf.template
+
+secrets:
+  pgpass:
+    file: ./database/.pgpass
+  postgres_passwd:
+    file: ./database/postgres-passwd
+
+volumes:
+  database:
+    driver: local
+
+networks:
+  proxy:
+    external: true
+  hoarder_db:
+    name: hoarder_db
+    driver: overlay
