@@ -53,6 +53,16 @@ services:
 
   grafana:
     image: grafana/grafana:12.1.0
+    environment:
+      GF_ANALYTICS_ENABLED: "false"
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+      GF_ANALYTICS_CHECK_FOR_PLUGIN_UPDATES: "false"
+      GF_SNAPSHOTS_ENABLED: "false"
+      GF_DASHBOARD_CLEANUP_INTERVAL: 1h
+      GF_DASHBOARD_CLEANUP_BATCH_SIZE: 5
+      GF_UNIFIED_ALERTING_ENABLED: "false"
+      GF_NEW_NEWS_FEED_ENABLED: "false"
     volumes:
       - type: volume
         source: grafana
