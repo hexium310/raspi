@@ -17,6 +17,21 @@ scrape_configs:
     static_configs:
       - targets:
         - cadvisor:8080
+    metric_relabel_configs:
+      - regex: id
+        action: labeldrop
+      - regex: container_label_com_docker_swarm_(service_name|task_id|task_name)
+        action: labeldrop
+      - regex: container_label_maintainer
+        action: labeldrop
+      - source_labels:
+          - __name__
+        regex: container_tasks_state
+        action: drop
+      - source_labels:
+          - __name__
+        regex: container_memory_failures_total
+        action: drop
 
   - job_name: snmp_ix2215
     static_configs:
