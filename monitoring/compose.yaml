@@ -26,6 +26,9 @@ services:
 
   cadvisor:
     image: ghcr.io/google/cadvisor:v0.53.0
+    command:
+      - --docker_only
+      - --housekeeping_interval=60s
     volumes:
       - type: bind
         source: /
