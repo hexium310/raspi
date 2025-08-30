@@ -20,7 +20,7 @@ services:
       labels:
         traefik.enable: "true"
         traefik.docker.network: proxy
-        traefik.http.routers.prometheus.entrypoints: web
+        traefik.http.routers.prometheus.entrypoints: websecure
         traefik.http.routers.prometheus.rule: Host(`prometheus.raspi.internal`)
         traefik.http.services.prometheus.loadbalancer.server.port: "9090"
 
@@ -77,7 +77,7 @@ services:
       labels:
         traefik.enable: "true"
         traefik.docker.network: proxy
-        traefik.http.routers.grafana.entrypoints: web
+        traefik.http.routers.grafana.entrypoints: websecure
         traefik.http.routers.grafana.rule: Host(`grafana.raspi.internal`)
         traefik.http.services.grafana.loadbalancer.server.port: "3000"
 

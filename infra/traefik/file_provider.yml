@@ -1,13 +1,18 @@
 http:
   routers:
     node_exporter:
-      entryPoints: 
-        - web
+      entryPoints:
+        - websecure
       service: node_exporter
       rule: Host(`node_exporter.raspi.internal`)
 
   services:
     node_exporter:
       loadBalancer:
-        servers: 
+        servers:
           - url: http://host.docker.internal:9100
+
+tls:
+  certificates:
+    - certFile: /etc/ssl/certs/_wildcard.raspi.internal.pem
+      keyFile: /etc/ssl/private/_wildcard.raspi.internal-key.pem

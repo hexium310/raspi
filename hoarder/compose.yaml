@@ -29,7 +29,7 @@ services:
       labels:
         traefik.enable: "true"
         traefik.docker.network: proxy
-        traefik.http.routers.hoarder_api.entrypoints: web
+        traefik.http.routers.hoarder_api.entrypoints: websecure
         traefik.http.routers.hoarder_api.rule: Host(`api.hoarder.raspi.internal`)
         traefik.http.services.hoarder_api.loadbalancer.server.port: "8080"
 
@@ -62,7 +62,7 @@ services:
       labels:
         traefik.enable: "true"
         traefik.docker.network: proxy
-        traefik.http.routers.hoarder_ui.entrypoints: web
+        traefik.http.routers.hoarder_ui.entrypoints: websecure
         traefik.http.routers.hoarder_ui.rule: Host(`hoarder.raspi.internal`)
         traefik.http.services.hoarder_ui.loadbalancer.server.port: "3000"
 
@@ -87,7 +87,7 @@ services:
       labels:
         traefik.enable: "true"
         traefik.docker.network: proxy
-        traefik.http.routers.hoarder_static.entrypoints: web
+        traefik.http.routers.hoarder_static.entrypoints: websecure
         traefik.http.routers.hoarder_static.rule: Host(`static.hoarder.raspi.internal`)
         traefik.http.services.hoarder_static.loadbalancer.server.port: "80"
 

@@ -9,6 +9,14 @@ services:
         source: /var/run/docker.sock
         target: /var/run/docker.sock
         read_only: true
+      - type: bind
+        source: /etc/ssl/certs/_wildcard.raspi.internal.pem
+        target: /etc/ssl/certs/_wildcard.raspi.internal.pem
+        read_only: true
+      - type: bind
+        source: /etc/ssl/private/_wildcard.raspi.internal-key.pem
+        target: /etc/ssl/private/_wildcard.raspi.internal-key.pem
+        read_only: true
     command:
       - --api.dashboard
       - --providers.swarm
@@ -16,8 +24,13 @@ services:
       - --providers.swarm.exposedByDefault=false
       - --providers.file.directory=/etc/traefik
       - --entrypoints.web.address=:80
+      - --entrypoints.web.http.redirections.entrypoint.to=websecure
+      - --entrypoints.web.http.redirections.entrypoint.scheme=https
+      - --entrypoints.websecure.address=:443
+      - --entrypoints.websecure.http.tls=true
     ports:
       - "80:80"
+      - "443:443"
     extra_hosts:
       host.docker.internal: host-gateway
     networks:
@@ -26,8 +39,8 @@ services:
       labels:
         traefik.enable: "true"
         traefik.docker.network: proxy
-        traefik.http.routers.traefik_api.entrypoints: web
-        traefik.http.routers.traefik_api.service: api@internal 
+        traefik.http.routers.traefik_api.entrypoints: websecure
+        traefik.http.routers.traefik_api.service: api@internal
         traefik.http.routers.traefik_api.rule: Host(`traefik.raspi.internal`)
         traefik.http.services.traefik_api.loadbalancer.server.port: "80"
 
