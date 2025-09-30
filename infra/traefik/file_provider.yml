@@ -16,3 +16,5 @@ tls:
   certificates:
     - certFile: /etc/ssl/certs/_wildcard.raspi.internal.pem
       keyFile: /etc/ssl/private/_wildcard.raspi.internal-key.pem
+    - certFile: /etc/ssl/certs/_wildcard.hoarder.raspi.internal.pem
+      keyFile: /etc/ssl/private/_wildcard.hoarder.raspi.internal-key.pem

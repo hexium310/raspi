@@ -17,6 +17,14 @@ services:
         source: /etc/ssl/private/_wildcard.raspi.internal-key.pem
         target: /etc/ssl/private/_wildcard.raspi.internal-key.pem
         read_only: true
+      - type: bind
+        source: /etc/ssl/certs/_wildcard.hoarder.raspi.internal.pem
+        target: /etc/ssl/certs/_wildcard.hoarder.raspi.internal.pem
+        read_only: true
+      - type: bind
+        source: /etc/ssl/private/_wildcard.hoarder.raspi.internal-key.pem
+        target: /etc/ssl/private/_wildcard.hoarder.raspi.internal-key.pem
+        read_only: true
     command:
       - --api.dashboard
       - --providers.swarm
