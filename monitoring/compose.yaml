@@ -81,14 +81,57 @@ services:
         traefik.http.routers.grafana.rule: Host(`grafana.raspi.internal`)
         traefik.http.services.grafana.loadbalancer.server.port: "3000"
 
+  fluentbit:
+    image: fluent/fluent-bit:4.0
+    command:
+      - --config=/fluent-bit/etc/fluent-bit.yaml
+    ports:
+      - "514:5140/udp"
+    configs:
+      - source: fluentbit
+        target: /fluent-bit/etc/fluent-bit.yaml
+    networks:
+      - default
+      - proxy
+    deploy:
+      labels:
+        traefik.enable: "true"
+        traefik.docker.network: proxy
+        traefik.http.routers.fluentbit.entrypoints: websecure
+        traefik.http.routers.fluentbit.rule: Host(`fluentbit.raspi.internal`)
+        traefik.http.services.fluentbit.loadbalancer.server.port: "2020"
+
+  loki:
+    image: grafana/loki:3.5
+    ports:
+      - "3100:3100"
+    volumes:
+      - type: volume
+        source: loki
+        target: /loki
+    networks:
+      - default
+      - proxy
+    deploy:
+      labels:
+        traefik.enable: "true"
+        traefik.docker.network: proxy
+        traefik.http.routers.loki.entrypoints: websecure
+        traefik.http.routers.loki.rule: Host(`loki.raspi.internal`)
+        traefik.http.services.loki.loadbalancer.server.port: "2020"
+
 configs:
   prometheus:
     file: ./prometheus/prometheus.yml
+  fluentbit:
+    file: ./fluent-bit/fluent-bit.yaml
 
 volumes:
   grafana:
     driver: local
   prometheus:
+    driver: local
+  loki:
     driver: local
 
 networks:

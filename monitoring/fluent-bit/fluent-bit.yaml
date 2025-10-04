@@ -1,0 +1,53 @@
+# yaml-language-server: $schema=https://github.com/JustinGrote/FluentBitJsonSchema/releases/latest/download/fluentbit.schema.json
+
+service:
+  flush: 1
+  log_level: info
+  parsers_file: parsers.conf
+  http_server: on
+  http_listen: "0.0.0.0"
+  http_port: 2020
+
+parsers:
+  - name: syslog-all
+    format: regex
+    regex: '^(?<log>.+)$'
+
+  # WSR-1166DHPL2
+  - name: syslog-buffalo
+    format: regex
+    regex: '^\[(?<macAddress>(?:[0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2})\]\s+(?<host>AP[0-9a-fA-F]{12})\s+(?<kind>[A-Z]+):\s+(?<message>.*)$'
+
+pipeline:
+  inputs:
+    - name: syslog
+      alias: syslog-all
+      mode: udp
+      tag: syslog.all
+      parser: syslog-all
+
+  filters:
+    - name: parser
+      alias: syslog-parser
+      match: syslog.all
+      parser:
+        - syslog-rfc5424
+        - syslog-buffalo
+      key_name: log
+
+    - name: rewrite_tag
+      alias: syslog-general-rewrite-tag
+      match: syslog.all
+      rule: $pri ^[0-9]{1,5}$ syslog.general false
+
+    - name: rewrite_tag
+      alias: syslog-buffalo-rewrite-tag
+      match: syslog.all
+      rule: $macAddress ^(?:[0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}$ syslog.buffalo false
+
+  outputs:
+    - name: loki
+      alias: loki-output
+      match: '*'
+      host: loki
+      labels: job=fluent-bit, $host
