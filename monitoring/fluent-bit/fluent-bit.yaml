@@ -46,8 +46,8 @@ pipeline:
       rule: $macAddress ^(?:[0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}$ syslog.buffalo false
 
   outputs:
-    - name: loki
-      alias: loki-output
+    - name: pgsql
       match: '*'
-      host: loki
-      labels: job=fluent-bit, $host
+      host: ${PGHOST}
+      user: ${PGUSER}
+      database: ${PGDATABASE}

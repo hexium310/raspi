@@ -87,9 +87,18 @@ services:
       - --config=/fluent-bit/etc/fluent-bit.yaml
     ports:
       - "514:5140/udp"
+    environment:
+      PGHOST: timescaledb
+      PGDATABASE: fluentbit
+      PGUSER: fluentbit
+      PGPASSFILE: /run/secrets/.pgpass
     configs:
       - source: fluentbit
         target: /fluent-bit/etc/fluent-bit.yaml
+    secrets:
+      - source: pgpass
+        target: .pgpass
+        mode: 0o600
     networks:
       - default
       - proxy
@@ -101,24 +110,20 @@ services:
         traefik.http.routers.fluentbit.rule: Host(`fluentbit.raspi.internal`)
         traefik.http.services.fluentbit.loadbalancer.server.port: "2020"
 
-  loki:
-    image: grafana/loki:3.5
-    ports:
-      - "3100:3100"
+  timescaledb:
+    image: timescale/timescaledb:latest-pg17
+    environment:
+      PGUSER: fluentbit
+      POSTGRES_DB: fluentbit
+      POSTGRES_USER: fluentbit
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres-passwd
     volumes:
       - type: volume
-        source: loki
-        target: /loki
-    networks:
-      - default
-      - proxy
-    deploy:
-      labels:
-        traefik.enable: "true"
-        traefik.docker.network: proxy
-        traefik.http.routers.loki.entrypoints: websecure
-        traefik.http.routers.loki.rule: Host(`loki.raspi.internal`)
-        traefik.http.services.loki.loadbalancer.server.port: "2020"
+        source: timescaledb
+        target: /var/lib/postgresql/data
+    secrets:
+      - source: postgres_passwd
+        target: postgres-passwd
 
 configs:
   prometheus:
@@ -126,12 +131,18 @@ configs:
   fluentbit:
     file: ./fluent-bit/fluent-bit.yaml
 
+secrets:
+  pgpass:
+    file: ./timescaledb/.pgpass
+  postgres_passwd:
+    file: ./timescaledb/postgres-passwd
+
 volumes:
   grafana:
     driver: local
   prometheus:
     driver: local
-  loki:
+  timescaledb:
     driver: local
 
 networks:
