@@ -29,6 +29,7 @@ services:
     command:
       - --docker_only
       - --housekeeping_interval=60s
+      - --enable_metrics=app,cpu,cpuLoad,disk,diskIO,memory,network,oom_event,percpu,perf_event,pressure,process
     volumes:
       - type: bind
         source: /
