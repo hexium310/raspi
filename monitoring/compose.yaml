@@ -67,6 +67,7 @@ services:
       GF_DASHBOARD_CLEANUP_BATCH_SIZE: 5
       GF_UNIFIED_ALERTING_ENABLED: "false"
       GF_NEWS_NEWS_FEED_ENABLED: "false"
+      GF_FEATURE_TOGGLES_ENABLE: sqlExpressions
     volumes:
       - type: volume
         source: grafana
